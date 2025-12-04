@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SAR Poetry Explorer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #6381A5;
+      --panel: #111827;
+      --accent: #590202;
+      --accent-soft: rgba(249, 115, 22, 0.15);
+      --text: #00000;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --radius-xl: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at top, #F2F0E4 0, #F2EDD0 60%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Helvetica Neue", sans-serif;
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 900px;
+      background: #6588A6;
+      border-radius: 30px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow:
+        0 40px 80px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      padding: 20px 22px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      backdrop-filter: blur(20px);
+    }
+
+    .shell-header {
+      align-items: center;
+      gap: 5px;
+      padding: 4px 4px 10px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+    }
+
+    .shell-title-text {
+      display: inline;
+      gap: 10px;
+      color: #FFFFFF;
+    }
+
+    .shell-title-text h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .shell-title-text span {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+
+    .chat-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.3fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 820px) {
+      .shell {
+        padding: 14px 14px 16px;
+        border-radius: 22px;
+      }
+      .chat-panel {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .chat-window {
+      background: radial-gradient(circle at top left, #FFFFFF, #6F91B3 100%);
+      border-radius: 22px;
+      border: .5px solid #91BAE3;
+      box-shadow:
+        inset 0 0 0 1px #7EA1C4,
+        0 0 25px #7EA1C4;
+      padding: 12px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-log {
+      max-height: 340px;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.8) transparent;
+    }
+
+    .chat-log::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-log::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-log::-webkit-scrollbar-thumb {
+
+      border-radius: 999px;
+    }
+
+    .msg {
+      display: inline-flex;
+      max-width: 100%;
+      padding: 8px 11px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: normal;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: #F2F1E9;
+      color: #0f172a;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-bot {
+      align-self: flex-start;
+      background: #FFFFFF;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      padding: 0 2px;
+    }
+
+    .composer {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: normal;
+    }
+
+    .composer textarea {
+      flex: 1;
+      min-height: 100px;
+      max-height: 150px;
+      resize: vertical;
+      border-radius: 14px;
+      border: .5px solid var(--border);
+      background: #FFFFFF;
+
+      padding: 8px 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .composer textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .composer button {
+      border: none;
+      border-radius: 14px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      background: linear-gradient(to bottom, #fed7aa, #590202);
+      color: #FFFFFF;
+      cursor: pointer;
+      display: inline-flex;
+      width: 45px;
+      align-items: center;
+      gap: 6px;
+      box-shadow:
+        0 3px 6px rgba(248, 150, 69, 0.55),
+        0 0 0 1px rgba(148, 163, 184, 0.4);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+
+    .composer button:disabled {
+      opacity: 0.55;
+      cursor: default;
+      box-shadow: none;
+      transform: translateY(0);
+    }
+
+    .composer button:not(:disabled):hover {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    .composer button:not(:disabled):active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(248, 150, 69, 0.45);
+    }
+
+    .composer button span.icon {
+      font-size: 14px;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, #FFFFFF, #F2EDD0);
+      border-radius: 22px;
+      border: 1px solid #F2F0E4;
+      padding: 12px 14px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 1px 2px #F2F0E4;
+      height: fit-content;
+    }
+
+    .sidebar-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .sidebar-chip {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--muted);
+    }
+
+    .sidebar-note {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .hint-list {
+      list-style: none;
+      padding: 0;
+      margin: 2px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hint-list li {
+      font-size: 12px;
+      color: #000000;
+      padding: 5px 7px;
+      border-radius: 10px;
+      background: #F2EFE4;
+      border: 1px solid #D9D6CC;
+      cursor: pointer;
+      transition: background 0.08s ease, border-color 0.08s ease,
+        transform 0.05s ease;
+    }
+
+    .hint-list li:hover {
+      background: #D1CEC5;
+      border-color: #D1CEC5;
+      transform: translateY(-1px);
+    }
+
+    .poem-results {
+      border-radius: 18px;
+      padding: 8px 9px 6px;
+      color: #000000;
+      background: linear-gradient(top to bottom, #F2EFE4, #F2EFE4 65%, #D9D6CC);
+      border: 1px dashed #D9D6CC;
+      max-height: 210px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #D9D6CC transparent;
+    }
+
+    .poem-results::-webkit-scrollbar {
+      width: 6px;
+    }
+    .poem-results::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .poem-results::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.9);
+      border-radius: 999px;
+    }
+
+    .poem-card {
+      padding: 8px 8px 7px;
+      border-radius: 12px;
+      border: 1px solid #FFFFFF;
+      background: #FFFFFF;
+      margin-bottom: 6px;
+    }
+
+    .poem-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .poem-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 2px;
+      color: #000000;
+    }
+
+    .poem-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .poem-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 5px;
+    }
+
+    .poem-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: var(--muted);
+    }
+
+    .poem-link {
+      font-size: 11px;
+      color: #f97316;
+      text-decoration: none;
+    }
+
+    .poem-link:hover {
+      text-decoration: underline;
+    }
+
+    .poem-summary {
+      font-size: 11px;
+      color: #000000;
+      margin-top: 3px;
+    }
+
+    .status {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+    }
+
+    .status-dot.loading {
+      background: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="shell-header">
+        <div class="shell-title-text">
+          <h1>SAR Poetry Explorer</h1>
+          <span>Mood &amp; theme based discovery</span>
+        </div>
+
+    </div>
+
+    <div class="chat-panel">
+      <div class="chat-window">
+        <div id="chat-log" class="chat-log">
+          <div class="msg msg-bot">
+            Hi poetry fan. I’m here to help you discover poems from San Antonio Review
+            that match your moods or how you’re feeling. Tell me what’s on your mind or what you’re in the mood for.
+          </div>
+          <!--<div class="msg-meta">Poetry Explorer · SAR prototype</div>-->
+        </div>
+
+        <div class="composer">
+          <textarea
+            id="user-input"></textarea>
+          <button id="send-btn">
+            <span class="icon">⏎</span>
+            <!--Send-->
+          </button>
+        </div>
+        <div class="status">
+          <div id="status-dot" class="status-dot"></div>
+          <span id="status-text">Connected to SAR Poetry Explorer</span>
+        </div>
+
+<!--test to see if placement for suggested chips works here-->
+ <aside class="sidebar">
+<div class="sidebar-heading">
+          <div class="sidebar-title">You can try</div>
+
+        </div>
+        <!--<p class="sidebar-note">
+          Chat with the explorer the way you would with friend who gives good advice about great reads that match what you're feeling:
+        </p>-->
+        <ul class="hint-list">
+          <li data-prompt="I’m going through a breakup and want something that acknowledges the pain but doesn’t sugarcoat it.">
+            “I’m going through a breakup and want something that acknowledges the pain but doesn’t sugarcoat it.”
+          </li>
+          <li data-prompt="I feel anxious about my future and want something that gives me hope.">
+            “I feel anxious about my future and want something that gives me hope.”
+          </li>
+          <li data-prompt="I’m burned out but still want to believe life has possibilities beyond today. Can you recommend something that sees both?">
+            “I’m burned out but still want to believe life has possibilities beyond today. Can you recommend something that sees both?”
+          </li>
+        </ul>
+</aside>
+<!--end test-->
+
+
+
+
+      </div>
+
+      <aside class="sidebar" style="height:fit-content;">
+        <div class="sidebar-heading">
+          <div class="sidebar-title">your poem list</div>
+
+        </div>
+        <!--<p class="sidebar-note">
+
+        </p>-->
+        <!--<ul class="hint-list">
+          <li data-prompt="I’m going through a breakup and want something that acknowledges the pain but doesn’t sugarcoat it.">
+            “I’m going through a breakup and want something that acknowledges the pain but doesn’t sugarcoat it.”
+          </li>
+          <li data-prompt="I feel anxious about my future and want something that gives me hope.">
+            “I feel anxious about my future and want something that gives me hope.”
+          </li>
+          <li data-prompt="I’m burned out but still want to believe life has possibilities beyond today. Can you recommend something that sees both?">
+            “I’m burned out but still want to believe life has possibilities beyond today. Can you recommend something that sees both?”
+          </li>
+        </ul>-->
+
+        <div class="poem-results" id="poem-results">
+          <div class="poem-summary">
+           As you chat, poems the explorer recommends will appear here with links.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://sar-poetry-explorer-api.onrender.com";
+    let conversationId = null;
+    const chatLog = document.getElementById("chat-log");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const poemResults = document.getElementById("poem-results");
+    const statusText = document.getElementById("status-text");
+    const statusDot = document.getElementById("status-dot");
+
+    function addMessage(content, type) {
+      const msg = document.createElement("div");
+      msg.className = `msg ${type === "user" ? "msg-user" : "msg-bot"}`;
+      msg.textContent = content;
+      chatLog.appendChild(msg);
+
+      const meta = document.createElement("div");
+      meta.className = "msg-meta";
+      meta.textContent =
+        type === "user" ? "You" : "Poetry Explorer · SAR prototype";
+      chatLog.appendChild(meta);
+
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function renderPoems(poems) {
+      if (!poems || poems.length === 0) {
+        poemResults.innerHTML =
+          '<div class="poem-summary">No poems were recommended for this turn. The explorer may be focusing on safety and support instead of specific pieces.</div>';
+        return;
+      }
+
+      poemResults.innerHTML = "";
+      poems.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "poem-card";
+
+        const title = document.createElement("h3");
+        title.className = "poem-title";
+        title.textContent = p.title || "Untitled poem";
+
+        const meta = document.createElement("div");
+        meta.className = "poem-meta";
+        meta.textContent = p.author ? `by ${p.author}` : "San Antonio Review";
+
+        const tagWrap = document.createElement("div");
+        tagWrap.className = "poem-tags";
+
+        (p.moods || []).slice(0, 3).forEach((m) => {
+          const span = document.createElement("span");
+          span.className = "poem-tag";
+          span.textContent = m;
+          tagWrap.appendChild(span);
+        });
+
+        (p.themes || []).slice(0, 3).forEach((t) => {
+          const span = document.createElement("span");
+          span.className = "poem-tag";
+          span.textContent = t;
+          tagWrap.appendChild(span);
+        });
+
+        const link =
+          p.url &&
+          `<a href="${p.url}" target="_blank" rel="noopener" class="poem-link">Read on San Antonio Review ↗</a>`;
+
+
+       
+        const summary = document.createElement("div");
+        summary.className = "poem-summary";
+        summary.textContent = p.summary || "";
+       
+
+        card.appendChild(title);
+        card.appendChild(meta);
+        if (tagWrap.children.length > 0) card.appendChild(tagWrap);
+        if (link) {
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = link;
+          card.appendChild(wrapper.firstChild);
+        }
+        if (summary.textContent.trim().length > 0) {
+          card.appendChild(summary);
+        }
+
+        poemResults.appendChild(card);
+      });
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      userInput.value = "";
+
+      sendBtn.disabled = true;
+      statusDot.classList.add("loading");
+      statusText.textContent = "Thinking with the SAR catalog…";
+
+      try {
+        const payload = {
+          message: text,
+          top_k: 3,
+        };
+        if (conversationId) {
+          payload.conversation_id = conversationId;
+        }
+
+        const res = await fetch(`${API_BASE}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        conversationId = data.conversation_id || conversationId;
+        addMessage(data.reply || "[No reply]", "bot");
+        renderPoems(data.poems || []);
+        statusText.textContent = "Connected to SAR Poetry Explorer";
+      } catch (err) {
+        console.error(err);
+        addMessage(
+          "Something went wrong reaching the explorer. Please try again in a moment.",
+          "bot"
+        );
+        statusText.textContent = "Connection issue – check API URL";
+      } finally {
+        sendBtn.disabled = false;
+        statusDot.classList.remove("loading");
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.querySelectorAll(".hint-list li").forEach((li) => {
+      li.addEventListener("click", () => {
+        userInput.value = li.dataset.prompt;
+        userInput.focus();
+      });
+    });
+  </script>
+</body>
+</html>
