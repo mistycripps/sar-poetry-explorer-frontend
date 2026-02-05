@@ -273,17 +273,39 @@ You can tell me things like:
     userInput.value = introDraft;
     userInput.setSelectionRange(userInput.value.length, userInput.value.length);
 
-    function addBubble(text, who) {
-      const el = document.createElement("div");
-      el.className = `bubble ${who === "user" ? "user" : "bot"}`;
-      el.textContent = text;
-      chatLog.appendChild(el);
-      chatLog.scrollTop = chatLog.scrollHeight;
-    }
+
+
+
+ function addBubble(text, who) {
+  const el = document.createElement("div");
+  el.className = `bubble ${who === "user" ? "user" : "bot"}`;
+  
+  if (who === "bot") {
+    // Convert URLs to clickable links for bot messages
+    const linkedText = text.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">$1</a>'
+    );
+    el.innerHTML = linkedText;
+  } else {
+    el.textContent = text;
+  }
+  
+  chatLog.appendChild(el);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+
+
+
+
+
+
 
     async function sendMessage(textOverride = null) {
       const text = (textOverride ?? userInput.value).trim();
-      if (!text) return;
+
+ if (!text) return;
 
       addBubble(text, "user");
       userInput.value = "";
